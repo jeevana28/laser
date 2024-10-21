@@ -61,6 +61,15 @@ class DatasetMetrics:
             self.sum_f1_score += f1pr_score.f1
 
         if log_prob_results is not None:
+            # print("\n.........................\n")
+            # print(type(log_prob_results))
+            # print("\n.........................\n")
+            # print(type(self.sum_total_log_prob))
+            # print("\n.........................\n")
+            # # print(self.sum_total_log_prob.size())
+            # print("\n.........................\n")
+            # print(log_prob_results.answer_log_prob.shape)
+            # print("\n.........................\n")
             if type(log_prob_results) == list:
                 self.num_logprob_examples += len(log_prob_results)
                 for log_prob_results_ in log_prob_results:
@@ -70,9 +79,13 @@ class DatasetMetrics:
                     self.total_answer_words += log_prob_results_.answer_len
             else:
                 self.num_logprob_examples += 1
+                #to be edited
                 self.sum_total_log_prob += log_prob_results.answer_log_prob
+                # self.sum_total_log_prob += log_prob_results.answer_log_prob.sum().item()
                 self.sum_mean_log_prob += (
                         log_prob_results.answer_log_prob / float(max(1, log_prob_results.answer_len)))
+                # self.sum_mean_log_prob += (
+                        # log_prob_results.answer_log_prob.sum().item() / float(max(1, log_prob_results.answer_len)))
                 self.total_answer_words += log_prob_results.answer_len
 
         if top_k_acc is not None:
@@ -245,16 +258,26 @@ class Metrics:
         return f1pr_scores.f1
 
     @staticmethod
+    @staticmethod
     def find_answer_len(question_answer_token_ids, answer, llm_tokenizer):
-
-        answer_stripped = answer.strip()
-
+        # Tokenize the answer using the same tokenizer
+        answer_tokens = llm_tokenizer(answer.strip(), return_tensors="pt")['input_ids'].squeeze().tolist()
+        
+        print(f"Answer tokens = {answer_tokens}")
+        
         length = question_answer_token_ids.shape[0]
-        for i in range(length - 1, -1, -1):
-            pad = llm_tokenizer.decode(question_answer_token_ids[i:], clean_up_tokenization_spaces=False)
-            if pad.strip() == answer_stripped:
-                return length - i
-        raise AssertionError(f" Did not find {answer} in {question_answer_token_ids}")
+        answer_len = len(answer_tokens)
+        
+        # Search for the tokenized answer in the tokenized question-answer sequence
+        for i in range(length - answer_len + 2):
+            # Compare tokenized answer with the corresponding segment of question_answer_token_ids
+            # print("ques tokens = ", question_answer_token_ids[i:i+answer_len].tolist())
+            if question_answer_token_ids[i:i+answer_len].tolist() == answer_tokens[1:]:
+                return answer_len  # Return the length of the answer in token IDs
+
+        # Raise an error if the tokenized answer is not found
+        raise AssertionError(f"Did not find tokenized answer '{answer}' in the tokenized sequence.")
+
 
     def answer_log_prob(self, log_prob, question_answer_token_ids, answer, llm_tokenizer):
         """
@@ -279,6 +302,45 @@ class Metrics:
         return ContextAnswerLogProb(total_log_prob=total_log_prob,
                                     answer_log_prob=answer_log_prob,
                                     answer_len=answer_len)
+
+
+    def caption_log_prob(self, log_prob, question_answer_token_ids, answer, processor, device):
+        """
+        :param log_prob: Log prob of question+answer of size question_answer_length x vocab
+        :param question_answer_token_ids: indices of size question_answer_length
+        :param answer: Actual answer
+        :param processor: Tokenizer processor which is quite likely different from the self.tokenizer
+        :param device: Device (cpu or cuda) where the tensors are located
+        :return: ContextAnswerLogProb object with total log prob, answer log prob, and answer length
+        """
+
+        print(device)
+    
+        # Find the answer length using the given tokenizer
+        answer_len = self.find_answer_len(question_answer_token_ids, answer, processor.tokenizer)
+
+        # Ensure both log_prob and question_answer_token_ids are on the same device
+        log_prob = log_prob.to(device)
+        question_answer_token_ids = question_answer_token_ids.to(device)
+
+        # Select the log probabilities for the question + answer part
+        selected_log_prob = log_prob[:-1, :]  # question + answer length - 1 x vocab
+        indices = question_answer_token_ids[1:].unsqueeze(1)  # question + answer length - 1 x 1
+
+        # Perform gather operation, ensuring both tensors are on the same device
+        selected_log_prob = torch.gather(selected_log_prob, index=indices, dim=1)  # question + answer length - 1 x 1
+        total_log_prob = selected_log_prob.sum().item()  # Sum the total log probabilities
+
+        # Get log probabilities specific to the answer
+        answer_log_prob = selected_log_prob[-answer_len:, 0]  # Get log probabilities for answer tokens
+        answer_log_prob = answer_log_prob.sum().item()  # Sum log probabilities for the answer
+
+        # Return the result as a ContextAnswerLogProb object
+        return ContextAnswerLogProb(total_log_prob=total_log_prob,
+                                answer_log_prob=answer_log_prob,
+                                answer_len=answer_len)
+
+
 
     def masked_answer_log_prob(self, log_prob, question_answer_token_ids, masked_question_answer_token_ids, tokenizer):
         """
