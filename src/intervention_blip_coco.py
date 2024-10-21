@@ -292,28 +292,28 @@ if __name__ == '__main__':
     best_lname = None
     best_rate = None
 
-    for lnum in [-1, 11]:
-        print("lnum = ", lnum)
-        if lnum == -1:
-            lnames = ["dont"]
-            rates = [9.9]
-        else:
-            lnames = ["fc_in", "fc_out"]
-            rates = [1.0, 2.0, 9.9]
+    # for lnum in [-1, 11]:
+    #     print("lnum = ", lnum)
+    #     if lnum == -1:
+    #         lnames = ["dont"]
+    #         rates = [9.9]
+    #     else:
+    #         lnames = ["fc_in", "fc_out"]
+    #         rates = [1.0, 2.0, 9.9]
 
-        for lname in lnames:
-            for rate in reversed(rates):
+    #     for lname in lnames:
+    #         for rate in reversed(rates):
 
-                print("lnum = ", str(lnum), "lname = ", lname, "rates = ", rates)
+    #             print("lnum = ", str(lnum), "lname = ", lname, "rates = ", rates)
 
-                args.lnum = lnum
-                args.lname = lname
-                args.rate = rate
-                predictions = experiment.intervene(model=model,
-                                                   processor=processor,
-                                                   dataset=dataset,
-                                                   args=args,
-                                                   llm_name=llm_name)
+    #             args.lnum = lnum
+    #             args.lname = lname
+    #             args.rate = rate
+    #             predictions = experiment.intervene(model=model,
+    #                                                processor=processor,
+    #                                                dataset=dataset,
+    #                                                args=args,
+    #                                                llm_name=llm_name)
 
                 # results = experiment.validate(predictions, split=0.2)
 
@@ -337,9 +337,9 @@ if __name__ == '__main__':
                 #                f"layer: {best_lnum}, lname: {best_lnum}, rate: {best_rate}")
                 #     logger.log("=============")
 
-    logger.log("Experimented Completed.")
 
-
+    args.lnum = 7
+    args.lname = "fc_in"
     experiment.intervene(model=model,
                          processor=processor,
                          dataset=dataset,

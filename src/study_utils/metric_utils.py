@@ -1,6 +1,7 @@
 import nltk
 import math
 import torch
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
 
 class DatasetMetrics:
@@ -215,6 +216,12 @@ class Metrics:
         generation_token_set, answer_token_set = self._to_bow(generation, answer)
 
         return self._recall(generation_token_set, answer_token_set)
+    
+    def bleu4(self, generation, answer):
+        generation, answer = self._prepare(generation, answer)
+        generation_token_set, answer_token_set = self._to_bow(generation, answer)
+
+        return self._bleu4(generation_token_set, answer_token_set)
 
     @staticmethod
     def _precision(generation_token_set, answer_token_set):
@@ -226,6 +233,13 @@ class Metrics:
     def _recall(generation_token_set, answer_token_set):
         intersect = generation_token_set.intersection(answer_token_set)
         return float(len(intersect)) / float(max(1, len(answer_token_set)))
+    
+    @staticmethod
+    def _bleu4(generation_token_set, answer_token_set):
+        smoothing_function = SmoothingFunction().method1  # Smoothing to handle zero counts
+        bleu_score = sentence_bleu(answer_token_set, generation_token_set, 
+                                   weights=(0.25, 0.25, 0.25, 0.25), smoothing_function=smoothing_function)
+        return bleu_score
 
     def f1pr_scores(self, generation, answer):
         """
@@ -257,7 +271,6 @@ class Metrics:
         f1pr_scores = self.f1pr_scores(generation, answer)
         return f1pr_scores.f1
 
-    @staticmethod
     @staticmethod
     def find_answer_len(question_answer_token_ids, answer, llm_tokenizer):
         # Tokenize the answer using the same tokenizer
