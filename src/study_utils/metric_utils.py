@@ -8,6 +8,7 @@ class DatasetMetrics:
 
     CORRECTNESS = "0-1 correctness"
     AvgF1Score = "avg f1 score"
+    AvgBLEU4Score = "avg bleu4 score"
     MeanLogProb = "mean log prob"
     PERPLEXITY = "perplexity"
     DatasetSize = "dataset_size"
@@ -35,13 +36,14 @@ class DatasetMetrics:
         self.num_logprob_examples = 0
         self.num_correct = 0.0
         self.sum_f1_score = 0.0
+        self.sum_bleu4_score = 0.0
         self.sum_total_log_prob = 0.0
         self.sum_mean_log_prob = 0.0
         self.total_answer_words = 0.0
         self.total_top_k_acc = dict()
         self._terminate = False
 
-    def accept(self, is_correct, f1pr_score, log_prob_results, top_k_acc=None):
+    def accept(self, is_correct, f1pr_score, bleu4_score, log_prob_results, top_k_acc=None):
         """
         :param is_correct: True if exact match was correct and False otherwise
         :param f1pr_score: An F1PR score object
@@ -60,6 +62,11 @@ class DatasetMetrics:
             self.sum_f1_score = None
         else:
             self.sum_f1_score += f1pr_score.f1
+        
+        if bleu4_score is None:
+            self.sum_bleu4_score = None
+        else:
+            self.sum_bleu4_score += bleu4_score
 
         if log_prob_results is not None:
             # print("\n.........................\n")
@@ -122,6 +129,7 @@ class DatasetMetrics:
 
         self.logger.log(f"{prefix} 0-1 Correctness is {results[DatasetMetrics.CORRECTNESS]} percentage, "
                         f"Mean F1 score is {results[DatasetMetrics.AvgF1Score]}, "
+                        f"Mean BLEU4 score is {results[DatasetMetrics.AvgBLEU4Score]}, "
                         f"Mean Log Prob is {results[DatasetMetrics.MeanLogProb]}{top_k_results}")
 
     def agg_to_dict(self):
@@ -132,12 +140,19 @@ class DatasetMetrics:
             avg_f1_score = None
         else:
             avg_f1_score = self.sum_f1_score / float(max(1, self.num_examples))
+
+        if self.sum_bleu4_score is None:
+            avg_bleu4_score = None
+        else:
+            avg_bleu4_score = self.sum_bleu4_score / float(max(1, self.num_examples))
+
         mean_log_prob = self.sum_mean_log_prob / float(max(1, self.num_logprob_examples))
         perplexity = math.exp(- self.sum_total_log_prob / float(max(1, self.total_answer_words)))
 
         results = {
             DatasetMetrics.CORRECTNESS: accuracy,
             DatasetMetrics.AvgF1Score: avg_f1_score,
+            DatasetMetrics.AvgBLEU4Score: avg_bleu4_score,
             DatasetMetrics.MeanLogProb: mean_log_prob,
             DatasetMetrics.PERPLEXITY: perplexity,
             DatasetMetrics.DatasetSize: self.num_examples,

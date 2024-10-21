@@ -149,9 +149,10 @@ class BLIPExperiment:
             # We compute 0-1 match, f1, precision, and recall score in addition to log-prob of the answer tokens
             is_correct = self.metrics.generation_match(generation=generation, answer=answer)
             f1pr_score = self.metrics.f1pr_scores(generation=generation, answer=answer)
+            bleu4_score = self.metrics.bleu4(generation=generation, answer=answer)
 
             self.dataset_metric.accept(is_correct=is_correct,
-                                      f1pr_score=f1pr_score,
+                                      f1pr_score=f1pr_score, bleu4_score=bleu4_score,
                                       log_prob_results=log_prob_results)
 
             if i % 10 == 0:
