@@ -102,7 +102,13 @@ class BLIPExperiment:
         self.progress.start()
 
         generated_captions = []
-        ground_truth_captions = []
+        ground_truth_coco = {
+            "images": [],
+            "annotations": [],
+            "type": "captions",
+            "info": {},
+            "licenses": []
+        }
 
         # Example loop through your dataset
         for i in tqdm(range(0, dataset_size)):
@@ -163,10 +169,18 @@ class BLIPExperiment:
                 'image_id': i,  # Assuming 'i' is unique for each image
                 'caption': generation
             })
-            ground_truth_captions.append({
-                'image_id': i,
-                'caption': answer
+
+            # Store the ground-truth caption in COCO-style format
+            ground_truth_coco["images"].append({
+                "id": i,  # Unique image ID
+                "file_name": f"image_{i}.jpg"  # This can be any placeholder, or real image file name
             })
+            ground_truth_coco["annotations"].append({
+                "image_id": i,
+                "id": annotation_id,  # Unique annotation ID
+                "caption": answer
+            })
+            annotation_id += 1 
 
             self.dataset_metric.accept(is_correct=is_correct,
                                       f1pr_score=f1pr_score, bleu4_score=bleu4_score,
@@ -204,7 +218,7 @@ class BLIPExperiment:
             json.dump(generated_captions, f)
 
         with open(ground_truth_file, 'w') as f:
-            json.dump(ground_truth_captions, f)
+            json.dump(ground_truth_coco, f)
 
         # Evaluate using pycocoevalcap
         coco = COCO(ground_truth_file)
