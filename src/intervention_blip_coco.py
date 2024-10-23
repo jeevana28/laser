@@ -109,6 +109,7 @@ class BLIPExperiment:
             "info": {},
             "licenses": []
         }
+        annotation_id = 0
 
         # Example loop through your dataset
         for i in tqdm(range(0, dataset_size)):
