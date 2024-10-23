@@ -14,6 +14,11 @@ from study_utils.time_utils import elapsed_from_str, Progress
 from dataset_utils.coco import CocoDataset
 from PIL import Image
 
+from pycocotools.coco import COCO
+from pycocoevalcap.eval import COCOEvalCap
+import os
+import json
+
 class Results:
 
     def __init__(self, val_acc, val_logloss, test_acc, test_logloss):
@@ -96,6 +101,9 @@ class BLIPExperiment:
         self.dataset_metric.reset()
         self.progress.start()
 
+        generated_captions = []
+        ground_truth_captions = []
+
         # Example loop through your dataset
         for i in tqdm(range(0, dataset_size)):
             
@@ -151,6 +159,15 @@ class BLIPExperiment:
             f1pr_score = self.metrics.f1pr_scores(generation=generation, answer=answer)
             bleu4_score = self.metrics.bleu4(generation=generation, answer=answer)
 
+            generated_captions.append({
+                'image_id': i,  # Assuming 'i' is unique for each image
+                'caption': generation
+            })
+            ground_truth_captions.append({
+                'image_id': i,
+                'caption': answer
+            })
+
             self.dataset_metric.accept(is_correct=is_correct,
                                       f1pr_score=f1pr_score, bleu4_score=bleu4_score,
                                       log_prob_results=log_prob_results)
@@ -176,6 +193,29 @@ class BLIPExperiment:
                 "question_answer_length": input_and_answer['input_ids'].shape[1]
             }
             predictions.append(predictions_)
+
+        output_dir = './evaluation_results'  # Set this to the directory where you want to save results
+        os.makedirs(output_dir, exist_ok=True)
+
+        generated_file = os.path.join(output_dir, "generated_captions.json")
+        ground_truth_file = os.path.join(output_dir, "ground_truth_captions.json")
+
+        with open(generated_file, 'w') as f:
+            json.dump(generated_captions, f)
+
+        with open(ground_truth_file, 'w') as f:
+            json.dump(ground_truth_captions, f)
+
+        # Evaluate using pycocoevalcap
+        coco = COCO(ground_truth_file)
+        coco_result = coco.loadRes(generated_file)
+
+        coco_eval = COCOEvalCap(coco, coco_result)
+        coco_eval.evaluate()
+
+        for metric, score in coco_eval.eval.items():
+            print(f'{metric}: {score:.3f}')
+
         # Save results and terminate
         self.terminate_and_save(predictions)
         return predictions
