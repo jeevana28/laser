@@ -266,8 +266,6 @@ class BLIPExperiment:
 
         with open(save_summary_fname, "wb") as f:
             pickle.dump(results, f)
-        with open(save_summary_fname, "wb") as f:
-            json.dump(results, f)
 
         # Print final numbers and return
         self.logger.log(f"Time taken to store all results {elapsed_from_str(time_start)}")
