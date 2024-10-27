@@ -256,7 +256,7 @@ class BLIPExperiment:
             pickle.dump(predictions, f)
         with open(save_eval_fname, "wb") as f:
             pickle.dump(evaluation, f)
-        with open(save_eval_fname, "wb") as f:
+        with open(save_eval_fname, "w") as f:
             json.dump(evaluation, f)
 
         # Save the summary
