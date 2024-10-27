@@ -291,7 +291,7 @@ class Metrics:
         # Tokenize the answer using the same tokenizer
         answer_tokens = llm_tokenizer(answer.strip(), return_tensors="pt")['input_ids'].squeeze().tolist()
         
-        print(f"Answer tokens = {answer_tokens}")
+        # print(f"Answer tokens = {answer_tokens}")
         
         length = question_answer_token_ids.shape[0]
         answer_len = len(answer_tokens)
@@ -342,7 +342,7 @@ class Metrics:
         :return: ContextAnswerLogProb object with total log prob, answer log prob, and answer length
         """
 
-        print(device)
+        # print(device)
     
         # Find the answer length using the given tokenizer
         answer_len = self.find_answer_len(question_answer_token_ids, answer, processor.tokenizer)

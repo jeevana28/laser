@@ -129,7 +129,7 @@ class BLIPExperiment:
             question_answer = "Describe the image " + answer
             input_and_answer = processor(images=image, text=question_answer, return_tensors="pt").to(self.device)
 
-            print(input_and_answer['input_ids'].shape)
+            # print(input_and_answer['input_ids'].shape)
 
             with torch.no_grad():
                 # Generate from the model
@@ -143,13 +143,13 @@ class BLIPExperiment:
                 results = model_edit(input_and_answer['pixel_values'], input_and_answer['input_ids'])
                 logits = results.logits[0]  # question + answer length x vocab
                 log_prob = torch.nn.functional.log_softmax(logits, dim=1)  # question + answer length x vocab
-                print("log prob shape = ", log_prob.shape)
+                # print("log prob shape = ", log_prob.shape)
                 
                 # print(question_answer)
                 # question_answer = processor(text=question_answer, return_tensors="pt")
-                print("input_and_answer['input_ids'][0] = ", input_and_answer['input_ids'][0].shape)
+                # print("input_and_answer['input_ids'][0] = ", input_and_answer['input_ids'][0].shape)
 
-                print("Answer = ", answer)
+                # print("Answer = ", answer)
                 # log_prob_results = self.metrics.answer_log_prob(log_prob=log_prob,
                 #                                                 question_answer_token_ids=input_and_answer['input_ids'][0],
                 #                                                 answer=answer,
