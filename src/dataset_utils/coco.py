@@ -46,11 +46,11 @@ class CocoDataset(AbstractDataset):
                 continue
             
             count += 1
-            if count % 20 == 0:
+            if count % 500 == 0:
               print("loading", count, "th image")
 
-            if count == 10:
-              break
+            # if count == 10:
+            #   break
 
             dataset.append((image, caption))
 
