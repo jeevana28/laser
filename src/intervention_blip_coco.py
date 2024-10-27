@@ -101,6 +101,7 @@ class BLIPExperiment:
         self.dataset_metric.reset()
         self.progress.start()
 
+        ### resume evaluation code
         generated_captions = []
         ground_truth_coco = {
             "images": [],
@@ -110,6 +111,7 @@ class BLIPExperiment:
             "licenses": []
         }
         annotation_id = 0
+        ### resume evaluation code
 
         # Example loop through your dataset
         for i in tqdm(range(0, dataset_size)):
@@ -166,11 +168,11 @@ class BLIPExperiment:
             f1pr_score = self.metrics.f1pr_scores(generation=generation, answer=answer)
             bleu4_score = self.metrics.bleu4(generation=generation, answer=answer)
 
+            ### resume evaluation code
             generated_captions.append({
                 'image_id': i,  # Assuming 'i' is unique for each image
                 'caption': generation
             })
-
             # Store the ground-truth caption in COCO-style format
             ground_truth_coco["images"].append({
                 "id": i,  # Unique image ID
@@ -182,6 +184,7 @@ class BLIPExperiment:
                 "caption": answer
             })
             annotation_id += 1 
+            ### pause evaluation code
 
             self.dataset_metric.accept(is_correct=is_correct,
                                       f1pr_score=f1pr_score, bleu4_score=bleu4_score,
@@ -209,6 +212,7 @@ class BLIPExperiment:
             }
             predictions.append(predictions_)
 
+        ### resume evaluation code
         output_dir = './evaluation_results'  # Set this to the directory where you want to save results
         os.makedirs(output_dir, exist_ok=True)
 
@@ -220,6 +224,7 @@ class BLIPExperiment:
 
         with open(ground_truth_file, 'w') as f:
             json.dump(ground_truth_coco, f)
+        
 
         # Evaluate using pycocoevalcap
         coco = COCO(ground_truth_file)
@@ -232,10 +237,10 @@ class BLIPExperiment:
             print(f'{metric}: {score:.3f}')
 
         # Save results and terminate
-        self.terminate_and_save(predictions)
+        self.terminate_and_save(predictions, coco_eval.eval.items())
         return predictions
 
-    def terminate_and_save(self, predictions):
+    def terminate_and_save(self, predictions, evaluation):
 
         self.logger.log("Saving results. Final Performance is given below:")
         self.dataset_metric.terminate()
@@ -244,9 +249,14 @@ class BLIPExperiment:
         time_start = time.time()
         # Save predictions
         save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{args.rate}-{args.dtpts}-{args.lnum}.p"
+        save_eval_fname = f"{self.save_dir}/{llm_name}-evaluation-{args.rate}-{args.dtpts}-{args.lnum}.p"
 
         with open(save_pred_fname, "wb") as f:
             pickle.dump(predictions, f)
+        with open(save_eval_fname, "wb") as f:
+            pickle.dump(evaluation, f)
+        with open(save_eval_fname, "wb") as f:
+            json.dump(evaluation, f)
 
         # Save the summary
         save_summary_fname = f"{self.save_dir}/{llm_name}-result-summary-{args.rate}-{args.dtpts}-{args.lnum}.pkl"
@@ -257,6 +267,8 @@ class BLIPExperiment:
 
         with open(save_summary_fname, "wb") as f:
             pickle.dump(results, f)
+        with open(save_summary_fname, "wb") as f:
+            json.dump(results, f)
 
         # Print final numbers and return
         self.logger.log(f"Time taken to store all results {elapsed_from_str(time_start)}")
