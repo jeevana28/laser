@@ -237,7 +237,7 @@ class BLIPExperiment:
             print(f'{metric}: {score:.3f}')
 
         # Save results and terminate
-        self.terminate_and_save(predictions, coco_eval.eval.items())
+        self.terminate_and_save(predictions, coco_eval.eval)
         return predictions
 
     def terminate_and_save(self, predictions, evaluation):
