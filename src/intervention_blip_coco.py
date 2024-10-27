@@ -403,8 +403,8 @@ if __name__ == '__main__':
                 #     logger.log("=============")
 
 
-    args.lnum = 7
-    args.lname = "fc_in"
+    # args.lnum = -1
+    # args.lname = "dont"
     experiment.intervene(model=model,
                          processor=processor,
                          dataset=dataset,
