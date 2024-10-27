@@ -245,6 +245,7 @@ class BLIPExperiment:
         self.logger.log("Saving results. Final Performance is given below:")
         self.dataset_metric.terminate()
         self.dataset_metric.print()
+        self.logger.log("debugging")
 
         time_start = time.time()
         # Save predictions
