@@ -4,6 +4,7 @@ Run the following commands
 2. source .venv/bin/activate
 3. cd coco
 4. wget http://images.cocodataset.org/zips/val2014.zip
-5. cd ..
-6. pip install -r requirements.txt
-7. python src/blip_exper.py
+5. unzip val2014.zip
+6. cd ..
+7. pip install -r requirements.txt
+8. python src/blip_exper.py
