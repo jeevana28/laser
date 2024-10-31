@@ -3,6 +3,7 @@ import math
 import torch
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
+nltk.download('punkt_tab')
 
 class DatasetMetrics:
 

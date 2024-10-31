@@ -7,7 +7,7 @@ from PIL import Image
 
 class CocoDataset(AbstractDataset):
 
-    def __init__(self, dataset_file="/content/drive/MyDrive/cs682/project/coco/annotations/captions_val2017.json", images_dir="/content/drive/MyDrive/cs682/project/coco/val2017"):
+    def __init__(self, dataset_file="coco/annotations/captions_val2014_sampled_karpathy.json", images_dir="coco/"):
         super().__init__()
         self.dataset_file = dataset_file
         self.images_dir = images_dir
@@ -22,17 +22,18 @@ class CocoDataset(AbstractDataset):
 
         count = 0
         for annotation in data["annotations"]:
-            image_id = annotation["image_id"]
+            # print(annotation)
+            image_id = annotation["image"]
             caption = annotation["caption"]
             # assert caption.startswith(" "), f"Found caption that doesn't start with space ${caption}$"
 
             # Find the corresponding image file
-            image_file = next((img["file_name"] for img in data["images"] if img["id"] == image_id), None)
-            if image_file is None:
-                logger.log(f"Image ID {image_id} not found.")
-                continue
+            # image_file = next((img["file_name"] for img in data["images"] if img["id"] == image_id), None)
+            # if image_file is None:
+            #     logger.log(f"Image ID {image_id} not found.")
+            #     continue
 
-            image_path = os.path.join(self.images_dir, image_file)
+            image_path = os.path.join(self.images_dir, image_id)
             if not os.path.exists(image_path):
                 logger.log(f"Image file not found: {image_path}")
                 continue

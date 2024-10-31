@@ -292,13 +292,13 @@ if __name__ == '__main__':
 
     parser.add_argument('--model_path',
                         type=str,
-                        default="/content/drive/MyDrive/cs682/project/coco/results/blip_weights",
+                        default="coco/results/blip_weights",
                         help="Path where BLIP model weights are stored")
     parser.add_argument('--home_dir', type=str,
-                        default="/content/drive/MyDrive/cs682/project/coco/results/blip_results",
+                        default="coco/results/blip_results",
                         help='Directory where the results data is stored')
     parser.add_argument('--dataset_file', type=str,
-                        default="/content/drive/MyDrive/cs682/project/coco/",
+                        default="coco/",
                         help='Path to the dataset file or directory containing images and captions')
 
     # below two lines are not present for gptj_bbh
