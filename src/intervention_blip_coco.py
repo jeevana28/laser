@@ -249,11 +249,11 @@ class BLIPExperiment:
 
         time_start = time.time()
         # Save predictions
-        save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{args.rate}-{args.dtpts}-{args.lnum}.p"
+        # save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{args.rate}-{args.dtpts}-{args.lnum}.p"
         save_eval_fname = f"{self.save_dir}/{llm_name}-evaluation-{args.rate}-{args.dtpts}-{args.lnum}.p"
 
-        with open(save_pred_fname, "wb") as f:
-            pickle.dump(predictions, f)
+        # with open(save_pred_fname, "wb") as f:
+        #     pickle.dump(predictions, f)
         with open(save_eval_fname, "wb") as f:
             pickle.dump(evaluation, f)
 
@@ -263,6 +263,7 @@ class BLIPExperiment:
         results = self.dataset_metric.agg_to_dict()
         for k, v in args.__dict__.items():
             results["args/%s" % k] = v
+
 
         with open(save_summary_fname, "wb") as f:
             pickle.dump(results, f)
@@ -278,8 +279,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--rate', type=float, default=1, help='rates for intervention')
     parser.add_argument('--dtpts', type=int, default=22000, help='# samples per instruction')
-    parser.add_argument('--batch_size', type=int, default=32, help='batch size for evaluation')
-    parser.add_argument('--max_len', type=int, default=10, help='maximum length for generation')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size for evaluation')
+    parser.add_argument('--max_len', type=int, default=25, help='maximum length for generation')
     parser.add_argument('--k', type=int, default=10, help='top k for evaluation')
     parser.add_argument('--intervention', type=str, default="rank-reduction",
                         choices=['dropout', 'rank-reduction', 'zero'], help="what type of intervention to perform")

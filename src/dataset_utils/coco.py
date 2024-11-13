@@ -50,8 +50,8 @@ class CocoDataset(AbstractDataset):
             if count % 500 == 0:
               print("loading", count, "th image")
 
-            # if count == 10:
-            #   break
+            if count == 1000:
+              break
 
             dataset.append((image, caption))
 
