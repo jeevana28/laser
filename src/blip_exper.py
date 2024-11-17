@@ -21,9 +21,9 @@ def run_intervention(lname, lnum, rate):
 if __name__ == "__main__":
     # Run the script
     # Iterate over lnums from 1 to 11
-    for lnum in range(7, 8):
+    for lnum in range(11, 8, -1):
         # Iterate over rates 8, 8.5, 9, and 9.5
         for rate in [9, 8, 7, 6, 5, 4, 3, 2, 1]:
-            for lname in ["fc_out", "fc_in"]:
+            for lname in ["fc_1", "fc_2"]:
                 print(f"Running intervention with lnum={lnum} and rate={rate}")
                 run_intervention(lname, lnum, rate)

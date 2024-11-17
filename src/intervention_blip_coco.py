@@ -249,13 +249,13 @@ class BLIPExperiment:
 
         time_start = time.time()
         # Save predictions
-        # save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{args.rate}-{args.dtpts}-{args.lnum}.p"
-        save_eval_fname = f"{self.save_dir}/{llm_name}-evaluation-{args.rate}-{args.dtpts}-{args.lnum}.p"
+        save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{args.rate}-{args.dtpts}-{args.lnum}.p"
+        # save_eval_fname = f"{self.save_dir}/{llm_name}-evaluation-{args.rate}-{args.dtpts}-{args.lnum}.p"
 
-        # with open(save_pred_fname, "wb") as f:
-        #     pickle.dump(predictions, f)
-        with open(save_eval_fname, "wb") as f:
-            pickle.dump(evaluation, f)
+        with open(save_pred_fname, "wb") as f:
+            pickle.dump(predictions, f)
+        # with open(save_eval_fname, "wb") as f:
+        #     pickle.dump(evaluation, f)
 
         # Save the summary
         save_summary_fname = f"{self.save_dir}/{llm_name}-result-summary-{args.rate}-{args.dtpts}-{args.lnum}.pkl"
@@ -285,7 +285,7 @@ if __name__ == '__main__':
     parser.add_argument('--intervention', type=str, default="rank-reduction",
                         choices=['dropout', 'rank-reduction', 'zero'], help="what type of intervention to perform")
     parser.add_argument('--lname', type=str, default="None",
-                        choices=['k_proj', 'q_proj', 'v_proj', 'out_proj', 'fc_in', 'fc_up', 'fc_out',
+                        choices=['qkv_proj', 'fc_1', 'proj', 'fc_2',
                                  'None', 'dont', 'all', 'mlp', 'attn'],
                         help="provided which type of parameters to effect")
     parser.add_argument('--lnum', type=int, default=28, help='Layers to edit', choices=list(range(-1, 33)))
@@ -296,7 +296,7 @@ if __name__ == '__main__':
                         default="coco/results/blip_weights",
                         help="Path where BLIP model weights are stored")
     parser.add_argument('--home_dir', type=str,
-                        default="coco/results/blip_results",
+                        default="coco/results/blip_results/visual",
                         help='Directory where the results data is stored')
     parser.add_argument('--dataset_file', type=str,
                         default="coco/",
