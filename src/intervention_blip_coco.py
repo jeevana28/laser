@@ -249,13 +249,13 @@ class BLIPExperiment:
 
         time_start = time.time()
         # Save predictions
-        save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{args.rate}-{args.dtpts}-{args.lnum}.p"
-        # save_eval_fname = f"{self.save_dir}/{llm_name}-evaluation-{args.rate}-{args.dtpts}-{args.lnum}.p"
+        # save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{args.rate}-{args.dtpts}-{args.lnum}.p"
+        save_eval_fname = f"{self.save_dir}/{llm_name}-evaluation-{args.rate}-{args.dtpts}-{args.lnum}.p"
 
-        with open(save_pred_fname, "wb") as f:
-            pickle.dump(predictions, f)
-        # with open(save_eval_fname, "wb") as f:
-        #     pickle.dump(evaluation, f)
+        # with open(save_pred_fname, "wb") as f:
+        #     pickle.dump(predictions, f)
+        with open(save_eval_fname, "wb") as f:
+            pickle.dump(evaluation, f)
 
         # Save the summary
         save_summary_fname = f"{self.save_dir}/{llm_name}-result-summary-{args.rate}-{args.dtpts}-{args.lnum}.pkl"
