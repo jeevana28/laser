@@ -6,4 +6,5 @@ torchvision
 numpy>=1.17
 git+https://github.com/salaniz/pycocoevalcap.git
 nltk
-
+word2number==1.1
+num2words==0.5.13

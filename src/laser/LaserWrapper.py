@@ -2,7 +2,7 @@ from transformers import LlamaForCausalLM
 from transformers import RobertaForMaskedLM
 from transformers import GPTJForCausalLM, DecisionTransformerModel
 from transformers import BlipForConditionalGeneration
-
+from transformers import BlipForQuestionAnswering
 
 
 from laser.gptj_laser import GPTJLaser
@@ -76,7 +76,7 @@ class LaserWrapper:
                                               logger=logger,
                                               in_place=in_place)
 
-        elif type(model) == BlipForConditionalGeneration:
+        elif type(model) == BlipForConditionalGeneration or type(model) == BlipForQuestionAnswering:
             logger.log("Editing a BlipForConditionalGeneration Model")
 
             return BLIPLaser.get_edited_model(model=model,
