@@ -6,4 +6,7 @@
 *pkl
 .venv
 coco
+LAVIS
+nocaps
+decord
 
