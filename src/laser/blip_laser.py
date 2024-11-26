@@ -12,18 +12,14 @@ class BLIPLaser(AbstractLaser):
 
     @staticmethod
     def convert_name(name):
-      if name == "k_proj":
-          converted_name = "attention.self.key.weight"
-      elif name == "q_proj":
-          converted_name = "attention.self.query.weight"
-      elif name == "v_proj":
-          converted_name = "attention.self.value.weight"
-      elif name == "out_proj":
-          converted_name = "attention.output.dense.weight"
-      elif name == "fc_in":
-          converted_name = "intermediate.dense.weight"
-      elif name == "fc_out":
-          converted_name = "output.dense.weight"
+      if name == "qkv_proj":
+          converted_name = "self_attn.qkv.weight"
+      elif name == "proj":
+          converted_name = "self_attn.projection.weight"
+      elif name == "fc_1":
+          converted_name = "mlp.fc1.weight"
+      elif name == "fc_2":
+          converted_name = "mlp.fc2.weight"
       elif name == "k_proj_crossattention":
           converted_name = "crossattention.self.key.weight"
       elif name == "q_proj_crossattention":
@@ -47,7 +43,7 @@ class BLIPLaser(AbstractLaser):
 
         # Check for layer number match
         # If must be either -1 meaning modify all layers, or must match the given layer number
-        if lnum_to_modify != -1 and not name.startswith(f"text_decoder.bert.encoder.layer.{lnum_to_modify}.{converted_name}"):
+        if lnum_to_modify != -1 and not name.startswith(f"vision_model.encoder.layers.{lnum_to_modify}.{converted_name}"):
             return False
         # Check if layer type needs to be modified.
         #      'all', 'mlp', 'attn', 'k_proj', 'q_proj', 'v_proj', 'out_proj', 'fc_in', 'fc_out'

@@ -272,7 +272,7 @@ if __name__ == '__main__':
     parser.add_argument('--intervention', type=str, default="rank-reduction",
                         choices=['dropout', 'rank-reduction', 'zero'], help="what type of intervention to perform")
     parser.add_argument('--lname', type=str, default="None",
-                        choices=['k_proj', 'q_proj', 'v_proj', 'out_proj', 'fc_in', 'fc_up', 'fc_out',
+                        choices=['qkv_proj', 'fc_1', 'proj', 'fc_2',
                                  'None', 'dont', 'all', 'mlp', 'attn'],
                         help="provided which type of parameters to effect")
     parser.add_argument('--lnum', type=int, default=28, help='Layers to edit', choices=list(range(-1, 33)))
@@ -283,7 +283,7 @@ if __name__ == '__main__':
                         default="vqa/results/blip_weights",
                         help="Path where BLIP model weights are stored")
     parser.add_argument('--home_dir', type=str,
-                        default="vqa/results/blip_results",
+                        default="vqa/results/blip_results/visual_encoder",
                         help='Directory where the results data is stored')
     parser.add_argument('--dataset_file', type=str,
                         default="vqa",

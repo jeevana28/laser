@@ -24,6 +24,6 @@ if __name__ == "__main__":
     for lnum in range(4, 5):
         # Iterate over rates 8, 8.5, 9, and 9.5
         for rate in [9]:#, 8, 7, 6, 5, 4, 3, 2, 1]:
-            for lname in ["fc_out", "fc_in"]:
+            for lname in ["fc_1", "fc_2"]:
                 print(f"Running intervention with lnum={lnum} and rate={rate}")
                 run_intervention(lname, lnum, rate)
