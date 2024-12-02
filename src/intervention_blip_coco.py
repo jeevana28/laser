@@ -121,12 +121,13 @@ class BLIPExperiment:
                 self.dataset_metric.print()
                 self.progress.print(ex_done=i, ex_left=(dataset_size - i))
 
-            image, answer = dataset[i]  # Assuming dataset[i] returns (image, answer)
+            image, answers = dataset[i]  # Assuming dataset[i] returns (image, answer)
             
             # Prepare inputs using the BlipProcessor
             # image = Image.open(image_path).convert
             inputs = processor(images=image, return_tensors="pt").to(self.device)
-            question_answer = "Describe the image " + answer
+            question_answer = "Describe the image " + answers[0]
+            answer = answers[0]
             input_and_answer = processor(images=image, text=question_answer, return_tensors="pt").to(self.device)
 
             # print(input_and_answer['input_ids'].shape)
@@ -178,12 +179,14 @@ class BLIPExperiment:
                 "id": i,  # Unique image ID
                 "file_name": f"image_{i}.jpg"  # This can be any placeholder, or real image file name
             })
-            ground_truth_coco["annotations"].append({
-                "image_id": i,
-                "id": annotation_id,  # Unique annotation ID
-                "caption": answer
-            })
-            annotation_id += 1 
+
+            for answer in answers:
+                ground_truth_coco["annotations"].append({
+                    "image_id": i,
+                    "id": annotation_id,  # Unique annotation ID
+                    "caption": answer
+                })
+                annotation_id += 1 
             ### pause evaluation code
 
             self.dataset_metric.accept(is_correct=is_correct,
@@ -239,6 +242,7 @@ class BLIPExperiment:
         # Save results and terminate
         self.terminate_and_save(predictions, coco_eval.eval)
         return predictions
+
 
     def terminate_and_save(self, predictions, evaluation):
 

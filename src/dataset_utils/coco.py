@@ -7,7 +7,7 @@ from PIL import Image
 
 class CocoDataset(AbstractDataset):
 
-    def __init__(self, dataset_file="coco/annotations/captions_val2014_sampled_karpathy.json", images_dir="coco/"):
+    def __init__(self, dataset_file="coco/annotations/coco_karpathy_val_final.json", images_dir="coco/"):
         super().__init__()
         self.dataset_file = dataset_file
         self.images_dir = images_dir
@@ -18,13 +18,13 @@ class CocoDataset(AbstractDataset):
             data = json.load(f)
 
         dataset = []
-        num_dp = len(data["annotations"])
+        num_dp = len(data)
 
         count = 0
-        for annotation in data["annotations"]:
+        for annotation in data:
             # print(annotation)
             image_id = annotation["image"]
-            caption = annotation["caption"]
+            captions = annotation["captions"]
             # assert caption.startswith(" "), f"Found caption that doesn't start with space ${caption}$"
 
             # Find the corresponding image file
@@ -50,10 +50,10 @@ class CocoDataset(AbstractDataset):
             if count % 500 == 0:
               print("loading", count, "th image")
 
-            if count == 1000:
+            if count == 2500:
               break
 
-            dataset.append((image, caption))
+            dataset.append((image, captions))
 
         logger.log(f"Read COCO dataset of size {num_dp}")
 
