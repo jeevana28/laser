@@ -1,5 +1,5 @@
 import torch
-
+import os
 from copy import deepcopy
 from laser.abstract_laser import AbstractLaser
 from laser.matrix_utils import do_low_rank, sorted_mat, prune
@@ -40,7 +40,8 @@ class BLIPLaser(AbstractLaser):
           raise AssertionError(f"Unhandled name {name}")
 
       return converted_name
-
+    
+    
 
     @staticmethod
     def _modify_layer(name, lnum_to_modify, lname_to_modify, converted_name):
@@ -100,6 +101,9 @@ class BLIPLaser(AbstractLaser):
                 print(f"Updating Layer: {name}")
             else:
                 continue
+            
+
+            print("intervention = ", intervention)
 
             if intervention == 'dropout':
                 # For the sparsity analysis
@@ -120,9 +124,53 @@ class BLIPLaser(AbstractLaser):
 
             else:
                 raise AssertionError(f"Unhandled intervention type {intervention}")
+            
+            diff = torch.abs(mat_analysis_tensor - mat_analysis)
+            frobenius_norm = torch.norm(diff, p='fro').item()
+            
+            # Compute the mean and max difference
+            mean_diff = torch.mean(diff).item()
+            max_diff = torch.max(diff).item()
+
+            # Print the differences
+            print(f"Frobenius Norm of the difference: {frobenius_norm:.6f}")
+            print(f"Mean element-wise difference: {mean_diff:.6f}")
+            print(f"Max element-wise difference: {max_diff:.6f}")
 
             BLIPLaser.update_model(model_edit, name, mat_analysis)
             num_update += 1
+
+        torch.save(model_edit.state_dict(), "reduced_model.pth")
+
+        # Get the file sizes (in bytes)
+        original_model_size = os.path.getsize("original_model.pth")
+        reduced_model_size = os.path.getsize("reduced_model.pth")
+
+        print(f"Original Model Size: {original_model_size / (1024 ** 2):.2f} MB")
+        print(f"Reduced Model Size: {reduced_model_size / (1024 ** 2):.2f} MB")
+
+        original_state_dict = model.state_dict()  # Get the state_dict of the original model
+        reduced_state_dict = model_edit.state_dict()  # Get the state_dict of the reduced model
+
+        differences = []
+
+        # Iterate over the parameters in the original model and compare with the reduced model
+        for name, original_param in original_state_dict.items():
+            if name in reduced_state_dict:
+                reduced_param = reduced_state_dict[name]
+                
+                # Check if the weights are the same
+                if torch.allclose(original_param, reduced_param, atol=1e-8):  # tolerance of 1e-6
+                    differences.append((name, "Same"))
+                else:
+                    differences.append((name, "Different"))
+            else:
+                differences.append((name, "Layer missing in reduced model"))
+
+        # Print the results
+        # for name, status in differences:
+        #     print(f"Layer: {name} - {status}")
+        
 
         assert num_update > 0, f"Must update some parameters Llama: {lnum}, {lname}"
 

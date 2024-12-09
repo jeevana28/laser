@@ -36,22 +36,22 @@ def viz_rank_change(rank_list,name):
 
 
 # Helper functions for rank reduction
-def do_low_rank(weight, k, debug=False, niter=2):
+def do_low_rank(weight, k, debug=True, niter=2):
     assert weight.ndim == 2
 
     max_rank = min(weight.shape[0], weight.shape[1])
     desired_rank = int(max_rank * k)
 
-    if debug:
-        print(f"Shape is {weight.shape} and shape is {weight.dtype} => desired rank {desired_rank}")
+    # if debug:
+    print(f"Shape is {weight.shape} and shape is {weight.dtype} => desired rank {desired_rank}")
 
     results = torch.svd_lowrank(weight,
                                 q=desired_rank,
                                 niter=niter)
     weight_approx = results[0] @ torch.diag(results[1]) @ results[2].T
 
-    if debug:
-        print(f"New matrix has shape {weight_approx.shape}")
+    # if debug:
+    print(f"New matrix has shape {weight_approx.shape}")
 
     assert weight_approx.shape[0] == weight.shape[0] and weight_approx.shape[1] == weight.shape[1]
     weight_approx = torch.nn.Parameter(weight_approx)

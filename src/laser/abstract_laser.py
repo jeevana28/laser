@@ -1,5 +1,6 @@
 import torch
-
+from copy import deepcopy
+import os
 
 class AbstractLaser:
 
@@ -15,6 +16,7 @@ class AbstractLaser:
     def update_model(model, name, params):
         with torch.no_grad():
             AbstractLaser.get_parameter(model, name)[...] = params
+
 
     @staticmethod
     def get_edited_model(model, lname, lnum, rate, intervention="rank-reduction", logger=None, in_place=True):

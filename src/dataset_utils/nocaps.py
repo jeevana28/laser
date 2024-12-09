@@ -75,8 +75,8 @@ class NoCapsDataset(AbstractDataset):
             # Append the image and captions as a tuple
             dataset.append((image_obj, captions))
 
-            if count==500:
-                break
+            # if count==500:
+            #     break
 
         logger.log(f"Loaded {len(dataset)} image-caption pairs from the dataset.")
         print("Total dataset size:", len(dataset))
