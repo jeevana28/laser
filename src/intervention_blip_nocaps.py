@@ -18,6 +18,22 @@ from pycocotools.coco import COCO
 from pycocoevalcap.eval import COCOEvalCap
 import os
 import json
+from copy import deepcopy
+
+
+def print_model_size(model):
+    total_size = 0
+    # Include parameters
+    for param in model.parameters():
+        total_size += param.numel() * param.element_size()
+    # Include buffers (e.g., BatchNorm running statistics)
+    for buffer in model.buffers():
+        total_size += buffer.numel() * buffer.element_size()
+    print("\n###################################")
+    print("Model size = ", total_size)
+    print("###################################\n")
+    return total_size
+
 
 class Results:
 
@@ -61,21 +77,6 @@ class BLIPExperiment:
 
         # Device for the experiment
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-      
-    @staticmethod
-    def validate(predictions, split=0.2):
-
-        val_size = int(split * len(predictions))
-        validation_predictions = predictions[:val_size]
-        test_predictions = predictions[val_size:]
-
-        val_acc, val_logloss = BLIPExperiment.get_acc_log_loss(validation_predictions)
-        test_acc, test_logloss = BLIPExperiment.get_acc_log_loss(test_predictions)
-
-        return Results(val_acc=val_acc,
-                       val_logloss=val_logloss,
-                       test_acc=test_acc,
-                       test_logloss=test_logloss)
 
     def intervene(self, model, processor, dataset, args, llm_name):
 
@@ -84,13 +85,40 @@ class BLIPExperiment:
                         f"Dataset size {dataset_size}. Batch size {args.batch_size}")
 
         time_edit_start = time.time()
-        model_edit = LaserWrapper.get_edited_model(model=model,
-                                                   lname=args.lname,
-                                                   lnum=args.lnum,
-                                                   rate=args.rate,
+        
+        print_model_size(model)
+        # torch.save(model.state_dict(), "original_model.pth")
+
+        model_edit = deepcopy(model)
+        for lname, lnum, rate in zip(args.lname, args.lnum, args.rate):
+            print(lname, " ", lnum, " ", rate)
+            model_edit = LaserWrapper.get_edited_model(model=model_edit,
+                                                   lname=lname,
+                                                   lnum=lnum,
+                                                   rate=rate,
                                                    intervention=args.intervention,
                                                    logger=logger,
                                                    in_place=True)
+            
+        print_model_size(model)
+        
+        original_weights = {name: param.data for name, param in model.named_parameters()}
+        reduced_weights = {name: param.data for name, param in model_edit.named_parameters()}
+
+        # # Compare the weights of each layer
+        # for name, original_weight in original_weights.items():
+        #     if name in reduced_weights:
+        #         reduced_weight = reduced_weights[name]
+        #         # Compute the differences
+        #         diff = torch.abs(original_weight - reduced_weight)
+        #         mean_diff = torch.mean(diff).item()
+        #         max_diff = torch.max(diff).item()
+                
+        #         print(f"Layer: {name}")
+        #         print(f"Mean difference: {mean_diff:.6f}, Max difference: {max_diff:.6f}")
+        #     else:
+        #         print(f"Layer {name} not found in the reduced model")
+
 
         model_edit.to(self.device)
         self.logger.log(f"Edited and put model on {model_edit.device} in time {elapsed_from_str(time_edit_start)}")
@@ -240,10 +268,15 @@ class BLIPExperiment:
             print(f'{metric}: {score:.3f}')
 
         # Save results and terminate
-        self.terminate_and_save(predictions, coco_eval.eval)
+        self.terminate_and_save(predictions, coco_eval.eval, args)
         return predictions
 
-    def terminate_and_save(self, predictions, evaluation):
+    def terminate_and_save(self, predictions, evaluation, args):
+
+        #append lnmaes
+        lnames = "_".join(args.lname)
+        lnums = "_".join([str(num) for num in args.lnum])
+        rates = "_".join([str(rate) for rate in args.rate])
 
         self.logger.log("Saving results. Final Performance is given below:")
         self.dataset_metric.terminate()
@@ -252,16 +285,16 @@ class BLIPExperiment:
 
         time_start = time.time()
         # Save predictions
-        # save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{args.rate}-{args.dtpts}-{args.lnum}.p"
-        save_eval_fname = f"{self.save_dir}/{llm_name}-evaluation-{args.rate}-{args.dtpts}-{args.lnum}.p"
+        save_pred_fname = f"{self.save_dir}/{llm_name}-predictions-{args.rate}-{args.dtpts}-{args.lnum}.p"
+        save_eval_fname = f"{self.save_dir}/{llm_name}-evaluation-{rates}-{args.dtpts}-{lnums}.p"
 
-        # with open(save_pred_fname, "wb") as f:
-        #     pickle.dump(predictions, f)
+        with open(save_pred_fname, "wb") as f:
+            pickle.dump(predictions, f)
         with open(save_eval_fname, "wb") as f:
             pickle.dump(evaluation, f)
 
         # Save the summary
-        save_summary_fname = f"{self.save_dir}/{llm_name}-result-summary-{args.rate}-{args.dtpts}-{args.lnum}.pkl"
+        save_summary_fname = f"{self.save_dir}/{llm_name}-result-summary-{rates}-{args.dtpts}-{lnums}.pkl"
 
         results = self.dataset_metric.agg_to_dict()
         for k, v in args.__dict__.items():
@@ -280,18 +313,26 @@ if __name__ == '__main__':
     # Step 1: Command line argument
     parser = argparse.ArgumentParser(description='Process Arguments for experiments with LLAMA 2 LLM on CounterFact')
 
-    parser.add_argument('--rate', type=float, default=1, help='rates for intervention')
+    parser.add_argument('--rate', type=float, nargs='+', default=[1.0],
+                    help='Rates for intervention. Pass multiple rates as a space-separated list.')
+
+    # Accept a list of parameter types
+    parser.add_argument('--lname', type=str, nargs='+', default=["None"],
+                    choices=['k_proj', 'q_proj', 'v_proj', 'out_proj', 'fc_in', 'fc_up', 'fc_out',
+                             'None', 'dont', 'all', 'mlp', 'attn'],
+                    help="List of parameter types to effect. Pass multiple values as a space-separated list.")
+
+    # Accept a list of layer numbers
+    parser.add_argument('--lnum', type=int, nargs='+', default=[11],
+                    choices=list(range(-1, 12)),
+                    help='Layers to edit. Pass multiple layer numbers as a space-separated list.')
+
     parser.add_argument('--dtpts', type=int, default=22000, help='# samples per instruction')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for evaluation')
     parser.add_argument('--max_len', type=int, default=25, help='maximum length for generation')
     parser.add_argument('--k', type=int, default=10, help='top k for evaluation')
     parser.add_argument('--intervention', type=str, default="rank-reduction",
                         choices=['dropout', 'rank-reduction', 'zero'], help="what type of intervention to perform")
-    parser.add_argument('--lname', type=str, default="None",
-                        choices=['k_proj', 'q_proj', 'v_proj', 'out_proj', 'fc_in', 'fc_up', 'fc_out',
-                                 'None', 'dont', 'all', 'mlp', 'attn'],
-                        help="provided which type of parameters to effect")
-    parser.add_argument('--lnum', type=int, default=28, help='Layers to edit', choices=list(range(-1, 33)))
 
 
     parser.add_argument('--model_path',
@@ -321,12 +362,12 @@ if __name__ == '__main__':
     home_dir = args.home_dir
     dataset_loc = args.dataset_file
 
-    save_dir = f"{home_dir}/{llm_name}/{args.intervention}/{args.lname}"
+    save_dir = f"{home_dir}/{llm_name}/{args.intervention}/{args.lname[0]}"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     # logger = Logger(save_dir=save_dir, fname=f"{llm_name}-log-{args.lnum}-{args.lname}-{args.rate}.txt")
-    logger = Logger(save_dir=save_dir, fname=f"{llm_name}-log-{args.lname}-{args.rate}.txt")
+    logger = Logger(save_dir=save_dir, fname=f"{llm_name}-log-{args.lname[0]}-{args.rate[0]}.txt")
 
     # Step 4: Create an experiment
     experiment = BLIPExperiment(save_dir=save_dir, logger=logger)
